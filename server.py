@@ -3,23 +3,54 @@ import socket
 
 import threading
 
+
+class Client:
+  def __init__(self, username, socket):
+    self.username = username
+    self.socket = socket
+
 serverAddress = "localhost"
 
+print("Starting Server...")
+        
+        
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((serverAddress, 1234))
+print("Server started on " + serverAddress + " on port " + "1234")
 server.listen()
 
-client, _ = server.accept()
+clients = []
 
-def send(m):
+#Client Object
+#Usernames
+#Socket
+
+def handle_client(client_socket):
+    # cname = client_socket.recv(1024).decode().split('NAME: ')[1]
+    
+
     while True:
-        message = input("")
-        m.send(message.encode())
-        print("You: " + message)
+        try:
+            message = client_socket.recv(1024).decode()
+            if not message:
+                remove_client(client_socket)
+                break
 
-def rec(m):
-    while True:
-        print("Partner: " + m.recv(1024).decode())
+            for client in clients:
+                if client != client_socket:
+                    client.send((message).encode())
+        except:
+            remove_client(client_socket)
+            break
 
-threading.Thread(target = send, args = (client,)).start()
-threading.Thread(target = rec, args = (client,)).start()
+def remove_client(client_socket):
+    if client_socket in clients:
+        clients.remove(client_socket)
+        client_socket.close()
+
+while True:
+    client, _ = server.accept()
+    clients.append(client)
+    client_thread = threading.Thread(target=handle_client, args=(client,))
+    client_thread.start()
+
