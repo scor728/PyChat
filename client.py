@@ -10,8 +10,9 @@ def run(clientSocket):
 
         threading.Thread(target = send_message, args = (clientSocket,)).start()
         threading.Thread(target = rec_message, args = (clientSocket,)).start()
-    except:
+    except KeyboardInterrupt:
         clientSocket.close()
+        exit()
 
 def connect():
     
@@ -31,19 +32,25 @@ def send_message(m):
 
 def rec_message(m):
     while True:
-        print("Partner: " + m.recv(1024).decode())
+        print(m.recv(1024).decode())
 
 def register():
     sock = connect()
+    sock.send(("R").encode())
     username = input("Enter a Username: ")
-    # sock.send("NAME: " + username)
+
+    sock.send(("NAME: " + username).encode())
     password = input("Enter a Password: ")
+    sock.send(("PASSWORD: " + password).encode())
     run(sock)
 
 def login():
     sock = connect()
+    sock.send(("L").encode())
     username1 = input("Username: ")
+    sock.send(("NAME: " + username1).encode())
     password2 = input("Password: ")
+    sock.send(("PASSWORD: " + password2).encode())
     run(sock)
 
 print("Welcoming to the Encrypted Messaging Service!")
@@ -56,10 +63,3 @@ elif operation == "2":
     login()
 else:
     exit()
-
-
-
-
-
-
-

@@ -5,14 +5,14 @@ import threading
 
 
 class Client:
-  def __init__(self, username, socket):
+  def __init__(self, username, socket, password):
     self.username = username
     self.socket = socket
+    self.password = password
 
 serverAddress = "localhost"
 
 print("Starting Server...")
-        
         
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server.bind((serverAddress, 1234))
@@ -25,20 +25,22 @@ clients = []
 #Usernames
 #Socket
 
-def handle_client(client_socket):
-    # cname = client_socket.recv(1024).decode().split('NAME: ')[1]
-    
-
+def handle_client(client):
     while True:
         try:
-            message = client_socket.recv(1024).decode()
+            socket = getattr(client, "socket")
+            uname = getattr(client, "username")
+
+            message = uname + ": " + socket.recv(1024).decode()
+
             if not message:
-                remove_client(client_socket)
+                remove_client(client)
                 break
 
-            for client in clients:
-                if client != client_socket:
-                    client.send((message).encode())
+            for client1 in clients:
+                if client1 != client:
+                    socket1 = getattr(client1, "socket")
+                    socket1.send((message).encode())
         except:
             remove_client(client_socket)
             break
@@ -46,10 +48,30 @@ def handle_client(client_socket):
 def remove_client(client_socket):
     if client_socket in clients:
         clients.remove(client_socket)
-        client_socket.close()
+        client_socket.socket.close()
+
+def setup_client(client_socket):
+    print("setup client")
+    operation  = client_socket.recv(1024).decode()
+    if operation == "R":
+        print("register")
+    elif operation == "L":
+        print("login")
+    else:
+        exit()
+
+    cname = client_socket.recv(1024).decode().split('NAME: ')[1]
+    print(cname)
+    password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+    print(password)
+
+    client = Client(cname, client_socket, password)
+    return client
+    
 
 while True:
-    client, _ = server.accept()
+    client_socket, _ = server.accept()
+    client = setup_client(client_socket)
     clients.append(client)
     client_thread = threading.Thread(target=handle_client, args=(client,))
     client_thread.start()
