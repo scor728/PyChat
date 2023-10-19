@@ -5,11 +5,12 @@ import threading
 
 
 class Client:
-  def __init__(self, username, socket, password, receiver_name):
+  def __init__(self, username, socket, password, receiver_name, logged_in):
     self.username = username
     self.socket = socket
     self.password = password
     self.receiver_name = receiver_name
+    logged_in = logged_in
 
 serverAddress = "localhost"
 
@@ -33,9 +34,10 @@ def handle_client(client):
             uname = getattr(client, "username")
             rname = getattr(client, "receiver_name")
 
-            message = uname + ": " + socket.recv(1024).decode()
+            message_val = socket.recv(1024).decode()
+            message = uname + ": " + message_val 
 
-            if not message:
+            if not message_val:
                 remove_client(client)
                 break
 
@@ -44,13 +46,13 @@ def handle_client(client):
                     socket1 = getattr(client1, "socket")
                     socket1.send((message).encode())
         except:
+
             remove_client(client_socket)
             break
 
-def remove_client(client_socket):
-    if client_socket in clients:
-        clients.remove(client_socket)
-        client_socket.socket.close()
+def remove_client(client):
+    if client in clients:
+        getattr(client, "socket").close()
 
 def setup_client(client_socket):
     print("setup client")
@@ -83,7 +85,8 @@ def setup_client(client_socket):
         rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
         print(rname)
 
-        client = Client(cname, client_socket, password, rname)
+        client = Client(cname, client_socket, password, rname, True)
+        clients.append(client)
         return client
     
     elif operation == "L":
@@ -100,7 +103,7 @@ def setup_client(client_socket):
             current_client = False
 
             for client in clients:
-                if getattr(client, "username") == cname and getattr(client, "password"):
+                if getattr(client, "username") == cname and getattr(client, "password") == password:
                     current_client = client
                     
             if current_client == False:
@@ -123,11 +126,61 @@ def setup_client(client_socket):
         return current_client
     else:
         exit()
-    
-while True:
-    client_socket, _ = server.accept()
-    client = setup_client(client_socket)
-    clients.append(client)
-    client_thread = threading.Thread(target=handle_client, args=(client,))
-    client_thread.start()
+
+
+print("About to enter loop")
+# try:
+#     while True:
+#         print("Entered Loops")
+#         client_socket, _ = server.accept()
+#         client = setup_client(client_socket)
+#         client_thread = threading.Thread(target=handle_client, args=(client,))
+#         client_thread.start()
+# except KeyboardInterrupt:
+#     print("KBI")
+
+# except Exception as e:
+#     for client in clients:
+#         sock = getattr(client, "socket")
+#         sock.close()
+#     exit()\
+
+
+# Flag to indicate whether to continue the loop
+running = True
+
+def signal_handler(signal, frame):
+    print("handling signal")
+    global running
+    print("Ctrl+C detected. Closing server and clients.")
+    running = False
+    for client in clients:
+        sock = getattr(client, "socket")
+        sock.close()
+    server.close()
+    exit()
+
+# Register the Ctrl+C signal handler
+import signal
+signal.signal(signal.SIGINT, signal_handler)
+
+import select
+while running:
+    sockets = [server]
+        
+    # Use select to wait for I/O activity with a timeout
+    readable, _, _ = select.select(sockets, [], [], 0.25)
+        
+    if server in readable:
+        client_socket, _ = server.accept()
+        client = setup_client(client_socket)
+        client_thread = threading.Thread(target=handle_client, args=(client,))
+        client_thread.start()
+
+    # print("Entered Loops")
+    # client_socket, _ = server.accept()
+    # print("Accepted")
+    # client = setup_client(client_socket)
+    # client_thread = threading.Thread(target=handle_client, args=(client,))
+    # client_thread.start()
 

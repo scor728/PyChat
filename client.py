@@ -16,6 +16,7 @@ def run(clientSocket):
 
         sending_thread.join()
         receiving_thread.join()
+        exit()
     except KeyboardInterrupt:
         stop = True
         clientSocket.close()
@@ -29,17 +30,36 @@ def connect():
     print("Connected to Server " + serverAddress + " on port " + "1234")
     return client
 
-
 def send_message(m):
+    global stop
     while not stop:
-        message = input("")
-        m.send(message.encode())
-        
-        print("You: " + message)
+        try: 
+            message = input("")
+            if message == "EXIT":
+                stop = True
+                m.close()
+                exit()
+                break
+
+            m.send(message.encode())
+            
+            print("You: " + message)
+        except Exception:
+            break
 
 def rec_message(m):
+    
+    global stop
     while not stop:
-        print(m.recv(1024).decode())
+        try:
+            message = m.recv(1024).decode()
+            if not message:
+                break
+            else:
+                print(message)
+
+        except Exception:
+            break
 
 def register():
     sock = connect()
@@ -78,7 +98,7 @@ def login():
         valid = sock.recv(1024).decode()
         if valid == "I":
             print("Username and Password Do not Match!\nEnter them Again:")
-        elif valid == 
+        
         else:
             logged_in = True
         
