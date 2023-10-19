@@ -121,7 +121,6 @@ def setup_client(client_socket):
 
         setattr(current_client, "socket", client_socket)
         setattr(current_client, "receiver_name", rname)
-
     
         return current_client
     else:
@@ -177,10 +176,14 @@ while running:
         client_thread = threading.Thread(target=handle_client, args=(client,))
         client_thread.start()
 
-    # print("Entered Loops")
-    # client_socket, _ = server.accept()
-    # print("Accepted")
-    # client = setup_client(client_socket)
-    # client_thread = threading.Thread(target=handle_client, args=(client,))
-    # client_thread.start()
 
+# TODO 
+# Iplement Logged in functionality
+# prevent users from logging into already logged into account
+# fix EXIT functionality
+# add message that indicates whether partner is online
+# add message that tells the user how to exit
+# add message caching functionality for users
+#     users can be sent messages and if the are offline, then it will add to a cache that they can see when they login and try to chat with the given sender
+# add encryption (server key)
+# add encryption (pass clients to encrypt messages from server)

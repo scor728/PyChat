@@ -3,10 +3,14 @@ import socket
 
 import threading
 
+import curses
+from curses import wrapper
+
 serverAddress = "localhost"
 stop = False
 
 def run(clientSocket):
+    
     try:
         sending_thread =threading.Thread(target = send_message, args = (clientSocket,))
         
@@ -34,18 +38,29 @@ def send_message(m):
     global stop
     while not stop:
         try: 
-            message = input("")
+            message = input("You: ")
+            CURSOR_UP_ONE = '\x1b[1A'
+            ERASE_LINE = '\x1b[2K'
+            # print(CURSOR_UP_ONE + ERASE_LINE)
             if message == "EXIT":
                 stop = True
                 m.close()
                 exit()
-                break
+            
+
 
             m.send(message.encode())
             
-            print("You: " + message)
+            # print("You: " + message)
         except Exception:
             break
+
+def welcome(rname):
+    print("\n\n---------------------------------")
+    print("Now Chatting with " + rname)
+    print("---------------------------------")
+    print("Type EXIT to exit the chat\n")
+
 
 def rec_message(m):
     
@@ -56,7 +71,7 @@ def rec_message(m):
             if not message:
                 break
             else:
-                print(message)
+                print("\n" + message, end="")
 
         except Exception:
             break
@@ -82,6 +97,7 @@ def register():
 
     receiver = input("Partner Username: ")
     sock.send(("RECEIVER: " + receiver).encode())
+    welcome(receiver)
 
     run(sock)
 
@@ -105,6 +121,10 @@ def login():
 
     receiver = input("Partner Username: ")
     sock.send(("RECEIVER: " + receiver).encode())
+
+    welcome(receiver)
+
+
     run(sock)
 
 print("Welcoming to the Encrypted Messaging Service!")
