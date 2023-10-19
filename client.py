@@ -4,13 +4,20 @@ import socket
 import threading
 
 serverAddress = "localhost"
+stop = False
 
 def run(clientSocket):
     try:
+        sending_thread =threading.Thread(target = send_message, args = (clientSocket,))
+        
+        receiving_thread = threading.Thread(target = rec_message, args = (clientSocket,))
+        sending_thread.start()
+        receiving_thread.start()
 
-        threading.Thread(target = send_message, args = (clientSocket,)).start()
-        threading.Thread(target = rec_message, args = (clientSocket,)).start()
+        sending_thread.join()
+        receiving_thread.join()
     except KeyboardInterrupt:
+        stop = True
         clientSocket.close()
         exit()
 
@@ -24,14 +31,14 @@ def connect():
 
 
 def send_message(m):
-    while True:
+    while not stop:
         message = input("")
         m.send(message.encode())
         
         print("You: " + message)
 
 def rec_message(m):
-    while True:
+    while not stop:
         print(m.recv(1024).decode())
 
 def register():
@@ -61,10 +68,21 @@ def register():
 def login():
     sock = connect()
     sock.send(("L").encode())
-    username1 = input("Username: ")
-    sock.send(("NAME: " + username1).encode())
-    password2 = input("Password: ")
-    sock.send(("PASSWORD: " + password2).encode())
+
+    logged_in = False
+    while not logged_in:
+        username1 = input("Username: ")
+        sock.send(("NAME: " + username1).encode())
+        password2 = input("Password: ")
+        sock.send(("PASSWORD: " + password2).encode())
+        valid = sock.recv(1024).decode()
+        if valid == "I":
+            print("Username and Password Do not Match!\nEnter them Again:")
+        elif valid == 
+        else:
+            logged_in = True
+        
+
     receiver = input("Partner Username: ")
     sock.send(("RECEIVER: " + receiver).encode())
     run(sock)

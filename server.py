@@ -89,16 +89,38 @@ def setup_client(client_socket):
     elif operation == "L":
         print("login")
 
-        cname = client_socket.recv(1024).decode().split('NAME: ')[1]
-        print(cname)
-        password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+        logged_in = False
+
+        while logged_in == False:        
+            cname = client_socket.recv(1024).decode().split('NAME: ')[1]
+            # print(cname)
+            password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+            # print(password)
+
+            current_client = False
+
+            for client in clients:
+                if getattr(client, "username") == cname and getattr(client, "password"):
+                    current_client = client
+                    
+            if current_client == False:
+                client_socket.send(("I").encode())
+            else:
+                #Set Client Socket
+                logged_in = True
+                client_socket.send(("V").encode())
+
         print(password)
 
         rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
         print(rname)
+        #Set Client Message Receiver
 
-        client = Client(cname, client_socket, password, rname)
-        return client
+        setattr(current_client, "socket", client_socket)
+        setattr(current_client, "receiver_name", rname)
+
+    
+        return current_client
     else:
         exit()
     
