@@ -5,10 +5,11 @@ import threading
 
 
 class Client:
-  def __init__(self, username, socket, password):
+  def __init__(self, username, socket, password, receiver_name):
     self.username = username
     self.socket = socket
     self.password = password
+    self.receiver_name = receiver_name
 
 serverAddress = "localhost"
 
@@ -30,6 +31,7 @@ def handle_client(client):
         try:
             socket = getattr(client, "socket")
             uname = getattr(client, "username")
+            rname = getattr(client, "receiver_name")
 
             message = uname + ": " + socket.recv(1024).decode()
 
@@ -38,7 +40,7 @@ def handle_client(client):
                 break
 
             for client1 in clients:
-                if client1 != client:
+                if getattr(client1, "username") == rname and getattr(client1, "receiver_name") == uname:
                     socket1 = getattr(client1, "socket")
                     socket1.send((message).encode())
         except:
@@ -65,10 +67,12 @@ def setup_client(client_socket):
     password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
     print(password)
 
-    client = Client(cname, client_socket, password)
+    rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
+    print(rname)
+
+    client = Client(cname, client_socket, password, rname)
     return client
     
-
 while True:
     client_socket, _ = server.accept()
     client = setup_client(client_socket)

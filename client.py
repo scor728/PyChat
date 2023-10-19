@@ -38,10 +38,13 @@ def register():
     sock = connect()
     sock.send(("R").encode())
     username = input("Enter a Username: ")
-
     sock.send(("NAME: " + username).encode())
     password = input("Enter a Password: ")
     sock.send(("PASSWORD: " + password).encode())
+
+    receiver = input("Partner Username: ")
+    sock.send(("RECEIVER: " + receiver).encode())
+
     run(sock)
 
 def login():
@@ -51,6 +54,8 @@ def login():
     sock.send(("NAME: " + username1).encode())
     password2 = input("Password: ")
     sock.send(("PASSWORD: " + password2).encode())
+    receiver = input("Partner Username: ")
+    sock.send(("RECEIVER: " + receiver).encode())
     run(sock)
 
 print("Welcoming to the Encrypted Messaging Service!")
