@@ -3,20 +3,18 @@ import socket
 
 import threading
 
-# import rsa
+import rsa
 
-
+public_key, private_key = rsa.newkeys(1024)
 # import curses
 # from curses import wrapper
+
+print(private_key)
 
 serverAddress = "localhost"
 stop = False
 
-
-
-
-def run(clientSocket):
-    
+def run(clientSocket):  
     try:
         sending_thread =threading.Thread(target = send_message, args = (clientSocket,))
         
@@ -33,29 +31,33 @@ def run(clientSocket):
         exit()
 
 def connect():
-    
     print("Connecting to Server...")
     client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     client.connect((serverAddress, 1234))
     print("Connected to Server " + serverAddress + " on port " + "1234")
+
     return client
+
+def encryption(socket):
+    print("Encrypting")
+    socket.send(public_key.save_pkcs1("PEM"))
+    global serverKey
+    serverKey = rsa.PublicKey.load_pkcs1(socket.recv(1024))
 
 def send_message(m):
     global stop
     while not stop:
         try: 
             message = input(">> ")
-            CURSOR_UP_ONE = '\x1b[1A'
-            ERASE_LINE = '\x1b[2K'
+            # CURSOR_UP_ONE = '\x1b[1A'
+            # ERASE_LINE = '\x1b[2K'
             # print(CURSOR_UP_ONE + ERASE_LINE)
             if message == "EXIT":
                 stop = True
                 m.close()
                 exit()
             
-
-
-            m.send(message.encode())
+            m.send(rsa.encrypt(message.encode(), serverKey))
             
             print("You: " + message)
         except Exception:
@@ -67,13 +69,11 @@ def welcome(rname):
     print("---------------------------------")
     print("Type EXIT to exit the chat\n")
 
-
 def rec_message(m):
-    
     global stop
     while not stop:
         try:
-            message = m.recv(1024).decode()
+            message = rsa.decrypt(m.recv(1024), private_key).decode()
             if not message:
                 break
             else:
@@ -84,13 +84,14 @@ def rec_message(m):
 
 def register():
     sock = connect()
-    sock.send(("R").encode())
+    encryption(sock)
+    sock.send(rsa.encrypt(("R").encode(), serverKey))
 
     while True:
         username = input("Enter a Username: ")
-        sock.send(("NAME: " + username).encode())
+        sock.send(rsa.encrypt(("NAME: " + username).encode(), serverKey))
 
-        valid = sock.recv(1024).decode()
+        valid = rsa.decrypt(sock.recv(1024), private_key).decode()
 
         if valid == "V":
             break
@@ -100,38 +101,37 @@ def register():
 
     password = input("Enter a Password: ")
     
-    sock.send(("PASSWORD: " + password).encode())
+    sock.send(rsa.encrypt(("PASSWORD: " + password).encode(), serverKey))
 
     receiver = input("Partner Username: ")
-    sock.send(("RECEIVER: " + receiver).encode())
+    sock.send(rsa.encrypt(("RECEIVER: " + receiver).encode(), serverKey))
     welcome(receiver)
 
     run(sock)
 
 def login():
     sock = connect()
-    sock.send(("L").encode())
+    encryption(sock)
+    sock.send(rsa.encrypt(("L").encode(), serverKey))
 
     logged_in = False
     while not logged_in:
         username1 = input("Username: ")
-        sock.send(("NAME: " + username1).encode())
+        sock.send(rsa.encrypt(("NAME: " + username1).encode(), serverKey))
         password2 = input("Password: ")
 
-        sock.send(("PASSWORD: " + password2).encode())
-        valid = sock.recv(1024).decode()
+        sock.send(rsa.encrypt(("PASSWORD: " + password2).encode(), serverKey))
+        valid = rsa.decrypt(sock.recv(1024), private_key).decode()
         if valid == "I":
             print("Username and Password Do not Match!\nEnter them Again:")
         
         else:
             logged_in = True
         
-
     receiver = input("Partner Username: ")
-    sock.send(("RECEIVER: " + receiver).encode())
+    sock.send(rsa.encrypt(("RECEIVER: " + receiver).encode(), serverKey))
 
     welcome(receiver)
-
 
     run(sock)
 

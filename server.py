@@ -4,15 +4,20 @@ import socket
 import threading
 
 import hashlib
-sha256 = hashlib.sha256()
+
+import rsa
+
+public_key, private_key = rsa.newkeys(1024)
 
 class Client:
-  def __init__(self, username, socket, password, receiver_name, logged_in):
+  def __init__(self, username, socket, password, receiver_name, logged_in, public_key):
     self.username = username
     self.socket = socket
     self.password = password
     self.receiver_name = receiver_name
-    logged_in = logged_in
+    self.logged_in = logged_in
+    self.public_key = public_key
+
 
 serverAddress = "localhost"
 
@@ -35,8 +40,9 @@ def handle_client(client):
             socket = getattr(client, "socket")
             uname = getattr(client, "username")
             rname = getattr(client, "receiver_name")
+            clientkey = getattr(client, "public_key")
 
-            message_val = socket.recv(1024).decode()
+            message_val = rsa.decrypt(socket.recv(1024), private_key).decode()
             message = uname + ": " + message_val 
 
             if not message_val:
@@ -46,7 +52,8 @@ def handle_client(client):
             for client1 in clients:
                 if getattr(client1, "username") == rname and getattr(client1, "receiver_name") == uname:
                     socket1 = getattr(client1, "socket")
-                    socket1.send((message).encode())
+                    clientkey = getattr(client1, "public_key")
+                    socket1.send(rsa.encrypt((message).encode(), clientkey))
         except:
 
             remove_client(client_socket)
@@ -57,15 +64,21 @@ def remove_client(client):
         getattr(client, "socket").close()
 
 def setup_client(client_socket):
+
+    clientKey = rsa.PublicKey.load_pkcs1(client_socket.recv(1024))
+    client_socket.send(public_key.save_pkcs1("PEM"))
+
+    print(clientKey)
+    
     print("setup client")
-    operation  = client_socket.recv(1024).decode()
+    operation  = rsa.decrypt(client_socket.recv(1024), private_key).decode()
     if operation == "R":
         print("register")
 
         valid = False
 
         while valid == False:
-            cname = client_socket.recv(1024).decode().split('NAME: ')[1]
+            cname = rsa.decrypt(client_socket.recv(1024),private_key).decode().split('NAME: ')[1]
             print(cname)
 
             found = False
@@ -77,19 +90,23 @@ def setup_client(client_socket):
             if found == False:
                 valid = True
             else:
-                client_socket.send(("I").encode())
+                client_socket.send(rsa.encrypt(("I").encode(), clientKey))
 
-        client_socket.send(("V").encode())
+        client_socket.send(rsa.encrypt(("V").encode(), clientKey))
         
-        password_input = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+        password_input = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('PASSWORD: ')[1]
+
+        sha256 = hashlib.sha256()
+
         sha256.update(password_input.encode('utf-8'))
         password = sha256.hexdigest()
+
         print(password)
 
-        rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
+        rname = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('RECEIVER: ')[1]
         print(rname)
 
-        client = Client(cname, client_socket, password, rname, True)
+        client = Client(cname, client_socket, password, rname, True, clientKey)
         clients.append(client)
         return client
     
@@ -99,10 +116,12 @@ def setup_client(client_socket):
         logged_in = False
 
         while logged_in == False:        
-            cname = client_socket.recv(1024).decode().split('NAME: ')[1]
+            cname = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('NAME: ')[1]
             # print(cname)
-            supplied_password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+            supplied_password = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('PASSWORD: ')[1]
             # print(password)
+
+            sha256 = hashlib.sha256()
 
             sha256.update(supplied_password.encode('utf-8'))
             password = sha256.hexdigest()
@@ -110,24 +129,30 @@ def setup_client(client_socket):
             current_client = False
 
             for client in clients:
+                print(cname)
+                print(getattr(client, "username"))
+                print(password)
+                print(getattr(client, "password"))
+                
                 if getattr(client, "username") == cname and getattr(client, "password") == password:
                     current_client = client
                     
             if current_client == False:
-                client_socket.send(("I").encode())
+                client_socket.send(rsa.encrypt(("I").encode(), clientKey))
             else:
                 #Set Client Socket
                 logged_in = True
-                client_socket.send(("V").encode())
+                client_socket.send(rsa.encrypt(("V").encode(), clientKey))
 
         print(password)
 
-        rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
+        rname = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('RECEIVER: ')[1]
         print(rname)
         #Set Client Message Receiver
 
         setattr(current_client, "socket", client_socket)
         setattr(current_client, "receiver_name", rname)
+        setattr(current_client, "public_key", clientKey)
     
         return current_client
     else:
