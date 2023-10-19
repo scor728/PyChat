@@ -3,11 +3,17 @@ import socket
 
 import threading
 
-import curses
-from curses import wrapper
+# import rsa
+
+
+# import curses
+# from curses import wrapper
 
 serverAddress = "localhost"
 stop = False
+
+
+
 
 def run(clientSocket):
     
@@ -38,7 +44,7 @@ def send_message(m):
     global stop
     while not stop:
         try: 
-            message = input("You: ")
+            message = input(">> ")
             CURSOR_UP_ONE = '\x1b[1A'
             ERASE_LINE = '\x1b[2K'
             # print(CURSOR_UP_ONE + ERASE_LINE)
@@ -51,7 +57,7 @@ def send_message(m):
 
             m.send(message.encode())
             
-            # print("You: " + message)
+            print("You: " + message)
         except Exception:
             break
 
@@ -93,6 +99,7 @@ def register():
 
 
     password = input("Enter a Password: ")
+    
     sock.send(("PASSWORD: " + password).encode())
 
     receiver = input("Partner Username: ")
@@ -110,6 +117,7 @@ def login():
         username1 = input("Username: ")
         sock.send(("NAME: " + username1).encode())
         password2 = input("Password: ")
+
         sock.send(("PASSWORD: " + password2).encode())
         valid = sock.recv(1024).decode()
         if valid == "I":

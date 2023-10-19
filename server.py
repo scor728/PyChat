@@ -3,6 +3,8 @@ import socket
 
 import threading
 
+import hashlib
+sha256 = hashlib.sha256()
 
 class Client:
   def __init__(self, username, socket, password, receiver_name, logged_in):
@@ -79,7 +81,9 @@ def setup_client(client_socket):
 
         client_socket.send(("V").encode())
         
-        password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+        password_input = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+        sha256.update(password_input.encode('utf-8'))
+        password = sha256.hexdigest()
         print(password)
 
         rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
@@ -97,8 +101,11 @@ def setup_client(client_socket):
         while logged_in == False:        
             cname = client_socket.recv(1024).decode().split('NAME: ')[1]
             # print(cname)
-            password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+            supplied_password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
             # print(password)
+
+            sha256.update(supplied_password.encode('utf-8'))
+            password = sha256.hexdigest()
 
             current_client = False
 
@@ -128,22 +135,6 @@ def setup_client(client_socket):
 
 
 print("About to enter loop")
-# try:
-#     while True:
-#         print("Entered Loops")
-#         client_socket, _ = server.accept()
-#         client = setup_client(client_socket)
-#         client_thread = threading.Thread(target=handle_client, args=(client,))
-#         client_thread.start()
-# except KeyboardInterrupt:
-#     print("KBI")
-
-# except Exception as e:
-#     for client in clients:
-#         sock = getattr(client, "socket")
-#         sock.close()
-#     exit()\
-
 
 # Flag to indicate whether to continue the loop
 running = True
@@ -178,11 +169,10 @@ while running:
 
 
 # TODO 
+# Add Curses Library for 'prettier' inputs
 # Iplement Logged in functionality
 # prevent users from logging into already logged into account
-# fix EXIT functionality
 # add message that indicates whether partner is online
-# add message that tells the user how to exit
 # add message caching functionality for users
 #     users can be sent messages and if the are offline, then it will add to a cache that they can see when they login and try to chat with the given sender
 # add encryption (server key)
