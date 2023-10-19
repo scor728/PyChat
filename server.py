@@ -57,21 +57,50 @@ def setup_client(client_socket):
     operation  = client_socket.recv(1024).decode()
     if operation == "R":
         print("register")
+
+        valid = False
+
+        while valid == False:
+            cname = client_socket.recv(1024).decode().split('NAME: ')[1]
+            print(cname)
+
+            found = False
+            for client in clients:
+                if getattr(client, "username") == cname:
+                    found = True
+                    break
+
+            if found == False:
+                valid = True
+            else:
+                client_socket.send(("I").encode())
+
+        client_socket.send(("V").encode())
+        
+        password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+        print(password)
+
+        rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
+        print(rname)
+
+        client = Client(cname, client_socket, password, rname)
+        return client
+    
     elif operation == "L":
         print("login")
+
+        cname = client_socket.recv(1024).decode().split('NAME: ')[1]
+        print(cname)
+        password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
+        print(password)
+
+        rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
+        print(rname)
+
+        client = Client(cname, client_socket, password, rname)
+        return client
     else:
         exit()
-
-    cname = client_socket.recv(1024).decode().split('NAME: ')[1]
-    print(cname)
-    password = client_socket.recv(1024).decode().split('PASSWORD: ')[1]
-    print(password)
-
-    rname = client_socket.recv(1024).decode().split('RECEIVER: ')[1]
-    print(rname)
-
-    client = Client(cname, client_socket, password, rname)
-    return client
     
 while True:
     client_socket, _ = server.accept()

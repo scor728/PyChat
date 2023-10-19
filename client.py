@@ -37,8 +37,19 @@ def rec_message(m):
 def register():
     sock = connect()
     sock.send(("R").encode())
-    username = input("Enter a Username: ")
-    sock.send(("NAME: " + username).encode())
+
+    while True:
+        username = input("Enter a Username: ")
+        sock.send(("NAME: " + username).encode())
+
+        valid = sock.recv(1024).decode()
+
+        if valid == "V":
+            break
+        else:
+            print("User already exists with this Username!")
+
+
     password = input("Enter a Password: ")
     sock.send(("PASSWORD: " + password).encode())
 
