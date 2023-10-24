@@ -42,6 +42,7 @@ def handle_client(client):
                 if getattr(client1, "username") == rname and getattr(client1, "receiver_name") == uname:
                     socket1 = getattr(client1, "socket")
                     clientkey = getattr(client1, "public_key")
+                    
                     socket1.send(rsa.encrypt((message).encode(), clientkey))
         except:
             remove_client(client)

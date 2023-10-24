@@ -14,7 +14,6 @@ stop = False
 def run(clientSocket):  
     try:
         sending_thread =threading.Thread(target = send_message, args = (clientSocket,))
-        
         receiving_thread = threading.Thread(target = rec_message, args = (clientSocket,))
         sending_thread.start()
         receiving_thread.start()
@@ -47,9 +46,8 @@ def send_message(m):
         try: 
 
             print(">> ", end = "")
+
             message = input("")
-            CURSOR_UP_ONE = '\x1b[1A'
-            ERASE_LINE = '\x1b[2K'
             
             if message == "EXIT":
                 stop = True
@@ -57,6 +55,10 @@ def send_message(m):
                 exit()
             
             m.send(rsa.encrypt(message.encode(), serverKey))
+
+
+            CURSOR_UP_ONE = '\x1b[1A'
+            ERASE_LINE = '\x1b[2K'
             print(CURSOR_UP_ONE + ERASE_LINE)
             print("You: " + message)
             
@@ -77,7 +79,9 @@ def rec_message(m):
     global stop
     while not stop:
         try:
+            
             message = rsa.decrypt(m.recv(1024), private_key).decode()
+
             if not message:
                 break
             else:
