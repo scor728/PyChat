@@ -1,13 +1,18 @@
 # This Contains Server related functionality
 import socket
-
 import threading
-
 import hashlib
-
 import rsa
+import signal
+import select
+import curses
+from curses import wrapper
 
 public_key, private_key = rsa.newkeys(1024)
+
+# Flag to indicate whether to continue the loop
+running = True
+
 
 class Client:
   def __init__(self, username, socket, password, receiver_name, logged_in, public_key):
@@ -18,21 +23,7 @@ class Client:
     self.logged_in = logged_in
     self.public_key = public_key
 
-
 serverAddress = "localhost"
-
-print("Starting Server...")
-        
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.bind((serverAddress, 1234))
-print("Server started on " + serverAddress + " on port " + "1234")
-server.listen()
-
-clients = []
-
-#Client Object
-#Usernames
-#Socket
 
 def handle_client(client):
     while True:
@@ -55,7 +46,6 @@ def handle_client(client):
                     clientkey = getattr(client1, "public_key")
                     socket1.send(rsa.encrypt((message).encode(), clientkey))
         except:
-
             remove_client(client_socket)
             break
 
@@ -158,16 +148,13 @@ def setup_client(client_socket):
     else:
         exit()
 
-
-print("About to enter loop")
-
-# Flag to indicate whether to continue the loop
-running = True
-
 def signal_handler(signal, frame):
-    print("handling signal")
     global running
-    print("Ctrl+C detected. Closing server and clients.")
+
+    screen.clear()
+    screen.addstr("Ctrl+C detected. Closing server and clients.")
+    screen.refresh()
+    # print("Ctrl+C detected. Closing server and clients.")
     running = False
     for client in clients:
         sock = getattr(client, "socket")
@@ -176,21 +163,46 @@ def signal_handler(signal, frame):
     exit()
 
 # Register the Ctrl+C signal handler
-import signal
+
 signal.signal(signal.SIGINT, signal_handler)
 
-import select
-while running:
-    sockets = [server]
-        
-    # Use select to wait for I/O activity with a timeout
-    readable, _, _ = select.select(sockets, [], [], 0.25)
-        
-    if server in readable:
-        client_socket, _ = server.accept()
-        client = setup_client(client_socket)
-        client_thread = threading.Thread(target=handle_client, args=(client,))
-        client_thread.start()
+
+def main(stdscr):
+    global screen
+    screen = stdscr
+
+    screen.clear()
+    screen.addstr("Starting Server...")
+    screen.refresh()
+    # // print("Starting Server...")
+    global server, clients
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.bind((serverAddress, 1234))
+    screen.clear()
+    screen.addstr("Server Started on " + serverAddress + " on port " + "1234")
+    screen.addstr("\n\nPress Ctrl + C to Close the server")
+    
+    screen.refresh()
+    server.listen()
+
+    clients = []
+
+    while running:
+        sockets = [server]
+            
+        # Use select to wait for I/O activity with a timeout
+        readable, _, _ = select.select(sockets, [], [], 0.25)
+            
+        if server in readable:
+            client_socket, _ = server.accept()
+            client = setup_client(client_socket)
+            client_thread = threading.Thread(target=handle_client, args=(client,))
+            client_thread.start()
+
+wrapper(main)
+
+if __name__ == '__main__':
+    main()
 
 
 # TODO 

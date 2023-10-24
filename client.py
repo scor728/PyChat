@@ -1,5 +1,6 @@
 # This Contains Client related functionality
 import socket
+import sys
 
 import threading
 
@@ -48,18 +49,23 @@ def send_message(m):
     global stop
     while not stop:
         try: 
-            message = input(">> ")
-            # CURSOR_UP_ONE = '\x1b[1A'
-            # ERASE_LINE = '\x1b[2K'
-            # print(CURSOR_UP_ONE + ERASE_LINE)
+
+            print(">> ", end = "")
+            message = input("")
+            CURSOR_UP_ONE = '\x1b[1A'
+            ERASE_LINE = '\x1b[2K'
+            
             if message == "EXIT":
                 stop = True
                 m.close()
                 exit()
             
             m.send(rsa.encrypt(message.encode(), serverKey))
-            
+            # remove_line()
+            print(CURSOR_UP_ONE + ERASE_LINE)
+            # remove_line()
             print("You: " + message)
+            
         except Exception:
             break
 
@@ -69,6 +75,10 @@ def welcome(rname):
     print("---------------------------------")
     print("Type EXIT to exit the chat\n")
 
+def remove_line():
+    sys.stdout.write("\r\033[K")
+    sys.stdout.flush()
+
 def rec_message(m):
     global stop
     while not stop:
@@ -77,8 +87,13 @@ def rec_message(m):
             if not message:
                 break
             else:
-                print("\n" + message, end="")
-
+                remove_line()
+                print("\n" + message)
+                # print(">> ")
+                print(">> ", end = "\r\033[3C")
+                # print("\033[3C")
+                # print('\x1b[1A')
+               
         except Exception:
             break
 
