@@ -16,9 +16,9 @@ Run ```py server.py``` from the root folder
 
 ## Inspiration/Basis:
 
-https://github.com/jlim262/py-socket-programming
+ - https://github.com/jlim262/py-socket-programming
 
-https://github.com/jlim262/py-socket-programming3
+ - https://github.com/jlim262/py-socket-programming3
 
-https://www.youtube.com/watch?v=U_Q1vqaJi34&ab_channel=NeuralNine
+ - https://www.youtube.com/watch?v=U_Q1vqaJi34&ab_channel=NeuralNine
 

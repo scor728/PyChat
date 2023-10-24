@@ -11,7 +11,6 @@ public_key, private_key = rsa.newkeys(1024)
 # Flag to indicate whether to continue the loop
 running = True
 
-
 class Client:
   def __init__(self, username, socket, password, receiver_name, logged_in, public_key):
     self.username = username
@@ -85,10 +84,7 @@ def setup_client(client_socket):
         sha256.update(password_input.encode('utf-8'))
         password = sha256.hexdigest()
 
-
-
         rname = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('RECEIVER: ')[1]
-
 
         client = Client(cname, client_socket, password, rname, True, clientKey)
         clients.append(client)
@@ -144,10 +140,7 @@ def signal_handler(signal, frame):
     server.close()
     exit()
 
-# Register the Ctrl+C signal handler
-
 signal.signal(signal.SIGINT, signal_handler)
-
 
 def main():
     print("Starting Server...")

@@ -46,7 +46,6 @@ def send_message(m):
         try: 
 
             print(">> ", end = "")
-
             message = input("")
             
             if message == "EXIT":
@@ -55,7 +54,6 @@ def send_message(m):
                 exit()
             
             m.send(rsa.encrypt(message.encode(), serverKey))
-
 
             CURSOR_UP_ONE = '\x1b[1A'
             ERASE_LINE = '\x1b[2K'
@@ -108,9 +106,7 @@ def register():
         else:
             print("User already exists with this Username!")
 
-
     password = input("Enter a Password: ")
-    
     sock.send(rsa.encrypt(("PASSWORD: " + password).encode(), serverKey))
 
     receiver = input("Partner Username: ")
