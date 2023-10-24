@@ -5,8 +5,6 @@ import hashlib
 import rsa
 import signal
 import select
-import curses
-from curses import wrapper
 
 public_key, private_key = rsa.newkeys(1024)
 
@@ -46,7 +44,7 @@ def handle_client(client):
                     clientkey = getattr(client1, "public_key")
                     socket1.send(rsa.encrypt((message).encode(), clientkey))
         except:
-            remove_client(client_socket)
+            remove_client(client)
             break
 
 def remove_client(client):
@@ -58,18 +56,13 @@ def setup_client(client_socket):
     clientKey = rsa.PublicKey.load_pkcs1(client_socket.recv(1024))
     client_socket.send(public_key.save_pkcs1("PEM"))
 
-    print(clientKey)
-    
-    print("setup client")
     operation  = rsa.decrypt(client_socket.recv(1024), private_key).decode()
     if operation == "R":
-        print("register")
 
         valid = False
 
         while valid == False:
             cname = rsa.decrypt(client_socket.recv(1024),private_key).decode().split('NAME: ')[1]
-            print(cname)
 
             found = False
             for client in clients:
@@ -91,25 +84,23 @@ def setup_client(client_socket):
         sha256.update(password_input.encode('utf-8'))
         password = sha256.hexdigest()
 
-        print(password)
+
 
         rname = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('RECEIVER: ')[1]
-        print(rname)
+
 
         client = Client(cname, client_socket, password, rname, True, clientKey)
         clients.append(client)
         return client
     
     elif operation == "L":
-        print("login")
 
         logged_in = False
 
         while logged_in == False:        
             cname = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('NAME: ')[1]
-            # print(cname)
+            
             supplied_password = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('PASSWORD: ')[1]
-            # print(password)
 
             sha256 = hashlib.sha256()
 
@@ -119,10 +110,6 @@ def setup_client(client_socket):
             current_client = False
 
             for client in clients:
-                print(cname)
-                print(getattr(client, "username"))
-                print(password)
-                print(getattr(client, "password"))
                 
                 if getattr(client, "username") == cname and getattr(client, "password") == password:
                     current_client = client
@@ -134,12 +121,9 @@ def setup_client(client_socket):
                 logged_in = True
                 client_socket.send(rsa.encrypt(("V").encode(), clientKey))
 
-        print(password)
-
         rname = rsa.decrypt(client_socket.recv(1024), private_key).decode().split('RECEIVER: ')[1]
-        print(rname)
+        
         #Set Client Message Receiver
-
         setattr(current_client, "socket", client_socket)
         setattr(current_client, "receiver_name", rname)
         setattr(current_client, "public_key", clientKey)
@@ -151,10 +135,7 @@ def setup_client(client_socket):
 def signal_handler(signal, frame):
     global running
 
-    screen.clear()
-    screen.addstr("Ctrl+C detected. Closing server and clients.")
-    screen.refresh()
-    # print("Ctrl+C detected. Closing server and clients.")
+    print("Ctrl+C detected. Closing server and clients.")
     running = False
     for client in clients:
         sock = getattr(client, "socket")
@@ -167,22 +148,13 @@ def signal_handler(signal, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 
-def main(stdscr):
-    global screen
-    screen = stdscr
-
-    screen.clear()
-    screen.addstr("Starting Server...")
-    screen.refresh()
-    # // print("Starting Server...")
+def main():
+    print("Starting Server...")
     global server, clients
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((serverAddress, 1234))
-    screen.clear()
-    screen.addstr("Server Started on " + serverAddress + " on port " + "1234")
-    screen.addstr("\n\nPress Ctrl + C to Close the server")
-    
-    screen.refresh()
+
+    print("Server Started on " + serverAddress + " on port " + "1234")
     server.listen()
 
     clients = []
@@ -199,18 +171,5 @@ def main(stdscr):
             client_thread = threading.Thread(target=handle_client, args=(client,))
             client_thread.start()
 
-wrapper(main)
-
 if __name__ == '__main__':
     main()
-
-
-# TODO 
-# Add Curses Library for 'prettier' inputs
-# Iplement Logged in functionality
-# prevent users from logging into already logged into account
-# add message that indicates whether partner is online
-# add message caching functionality for users
-#     users can be sent messages and if the are offline, then it will add to a cache that they can see when they login and try to chat with the given sender
-# add encryption (server key)
-# add encryption (pass clients to encrypt messages from server)

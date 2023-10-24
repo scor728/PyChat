@@ -7,10 +7,6 @@ import threading
 import rsa
 
 public_key, private_key = rsa.newkeys(1024)
-# import curses
-# from curses import wrapper
-
-print(private_key)
 
 serverAddress = "localhost"
 stop = False
@@ -61,9 +57,7 @@ def send_message(m):
                 exit()
             
             m.send(rsa.encrypt(message.encode(), serverKey))
-            # remove_line()
             print(CURSOR_UP_ONE + ERASE_LINE)
-            # remove_line()
             print("You: " + message)
             
         except Exception:
@@ -89,11 +83,8 @@ def rec_message(m):
             else:
                 remove_line()
                 print("\n" + message)
-                # print(">> ")
                 print(">> ", end = "\r\033[3C")
-                # print("\033[3C")
-                # print('\x1b[1A')
-               
+
         except Exception:
             break
 
