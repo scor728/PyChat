@@ -10,9 +10,9 @@ Run ```py server.py``` from the root folder
 
 ### 2. Run Client/s
 
-Run ```py client.py``` from the root folder
+ - In a separate terminal instance, Run ```py client.py``` from the root folder
 
-Follow instructions in client terminal
+ - Follow Client Terminal Instructions
 
 ## Inspiration/Basis:
 
