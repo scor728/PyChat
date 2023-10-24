@@ -2,7 +2,11 @@
 
 ## Instructions
 
-Server and Clients are designed to run on your local network, no initial configuration is required before starting the server.
+### 0. Environment Setup
+
+Navigate to the root folder and run ```pip install -r requirements.txt``` to install the required dependencies
+
+The Server and Clients are designed to run on your local network, no network related configuration is required before starting the server.
 
 ### 1. Run Server
 
