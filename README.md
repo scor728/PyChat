@@ -1,16 +1,18 @@
-1-1 Chatting Algoritm Using Python.
-Includes Asymmetric Encryption using RSA 
+1-1 Python Chatting Application, implementing Asymmetric Encryption using RSA 
 
 ## Instructions
 
-1. Run Server
+Server and Clients are designed to run on your local network, no initial configuration is required before starting the server.
 
-run ```py server.py``` from the root folder
+### 1. Run Server
 
-2. Run Client/s
+Run ```py server.py``` from the root folder
 
-run ```py client.py``` from the root folder
-follow instructions in client terminal
+### 2. Run Client/s
+
+Run ```py client.py``` from the root folder
+
+Follow instructions in client terminal
 
 ## Inspiration/Basis:
 
